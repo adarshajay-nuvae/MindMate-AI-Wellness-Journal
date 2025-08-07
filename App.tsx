@@ -3,6 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { JournalEntry, Analysis, View, CognitiveDistortion } from './types';
 import { analyzeEntry } from './services/aiService';
 import { BrainIcon, FileTextIcon, LightBulbIcon, ChartBarIcon, PlusIcon, QuestionMarkCircleIcon, FlagIcon } from './constants';
+import LandingPage from './components/LandingPage';
+import Insights from './components/Insights';
 
 // --- Helper Components ---
 
@@ -252,125 +254,13 @@ const Dashboard: React.FC<DashboardProps> = ({ entries, setView }) => {
     );
 };
 
-interface InsightsProps {
-    entries: JournalEntry[];
-}
-const Insights: React.FC<InsightsProps> = ({ entries }) => {
-    const [recharts, setRecharts] = useState<any>(null);
-
-    useEffect(() => {
-        if (window.Recharts) {
-            setRecharts(window.Recharts);
-        }
-    }, []);
-
-    const getMoodColor = (mood: string) => {
-        const lowerMood = mood.toLowerCase();
-        if (lowerMood.includes('happy') || lowerMood.includes('joy') || lowerMood.includes('excited') || lowerMood.includes('grateful')) return '#4ade80'; // green-400
-        if (lowerMood.includes('sad') || lowerMood.includes('down') || lowerMood.includes('depressed')) return '#60a5fa'; // blue-400
-        if (lowerMood.includes('anxious') || lowerMood.includes('stressed') || lowerMood.includes('overwhelmed')) return '#facc15'; // yellow-400
-        if (lowerMood.includes('angry') || lowerMood.includes('frustrated')) return '#f87171'; // red-400
-        if (lowerMood.includes('calm') || lowerMood.includes('relaxed') || lowerMood.includes('peaceful')) return '#c084fc'; // purple-400
-        return '#9ca3af'; // gray-400
-    };
-    
-    const processChartData = useCallback((journalEntries: JournalEntry[]) => {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        sevenDaysAgo.setHours(0, 0, 0, 0);
-
-        const recentEntries = journalEntries.filter(entry => new Date(entry.date) >= sevenDaysAgo);
-
-        const dataByDate: { [key: string]: { date: string; moods: { [mood: string]: number } } } = {};
-
-        recentEntries.forEach(entry => {
-            const entryDate = new Date(entry.date);
-            const dateKey = entryDate.toISOString().split('T')[0];
-            
-            if (!dataByDate[dateKey]) {
-                dataByDate[dateKey] = {
-                    date: entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                    moods: {},
-                };
-            }
-            
-            const mood = entry.analysis.mood;
-            dataByDate[dateKey].moods[mood] = (dataByDate[dateKey].moods[mood] || 0) + 1;
-        });
-
-        const sortedData = Object.entries(dataByDate)
-            .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
-            .map(([, value]) => value);
-
-        return sortedData;
-    }, []);
-
-    const chartData = processChartData(entries);
-    const allMoods = [...new Set(entries.flatMap(e => e.analysis.mood))];
-
-    if (!recharts) {
-        return <div className="p-6 text-center text-gray-500">Loading charts...</div>;
-    }
-    
-    if (entries.length === 0) {
-        return (
-             <div className="p-6 text-center bg-white rounded-lg shadow-md animate-fade-in">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Mood Timeline</h2>
-                <p className="text-gray-500">No entries yet. Write a journal to see your mood timeline.</p>
-            </div>
-        );
-    }
-    
-    const { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } = recharts;
-
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="p-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg">
-                    <p className="font-bold text-gray-800">{label}</p>
-                    {payload.map((pld: any, index: number) => (
-                        <div key={index} style={{ color: pld.fill }}>
-                            {`${pld.name}: ${pld.value}`}
-                        </div>
-                    ))}
-                </div>
-            );
-        }
-        return null;
-    };
-
-    return (
-        <div className="p-4 md:p-6 animate-fade-in">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Mood Timeline (Last 7 Days)</h1>
-            <div className="bg-white p-4 rounded-lg shadow-md w-full h-96">
-               {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey="date" stroke="#6b7280" />
-                            <YAxis allowDecimals={false} stroke="#6b7280" />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Legend />
-                            {allMoods.map((mood) => (
-                                <Bar key={mood} dataKey={`moods.${mood}`} stackId="a" name={mood} fill={getMoodColor(mood)} />
-                            ))}
-                        </BarChart>
-                    </ResponsiveContainer>
-                ) : (
-                    <div className="flex items-center justify-center h-full">
-                        <p className="text-gray-500">No entries in the last 7 days to display.</p>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
 
 // --- Main App Component ---
 
 const App = () => {
     const [view, setView] = useState<View>('dashboard');
     const [entries, setEntries] = useState<JournalEntry[]>([]);
+    const [showLanding, setShowLanding] = useState(true);
 
     // Load entries from local storage on initial render
     useEffect(() => {
@@ -401,6 +291,14 @@ const App = () => {
         const newEntries = [entry, ...entries];
         setEntries(newEntries);
     };
+    
+    const handleGetStarted = () => {
+        setShowLanding(false);
+    };
+
+    if (showLanding) {
+        return <LandingPage onGetStarted={handleGetStarted} />;
+    }
     
     const NavItem = ({ currentView, targetView, label, icon }: { currentView: View, targetView: View, label: string, icon: React.ReactNode}) => (
         <button
