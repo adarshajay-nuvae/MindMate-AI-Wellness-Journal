@@ -1,0 +1,1 @@
+# MindMate-AI-Wellness-Journal
