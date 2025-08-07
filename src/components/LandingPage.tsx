@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrainIcon, FileTextIcon, LightBulbIcon, ChartBarIcon } from '../constants';
+import { BrainIcon, FileTextIcon, LightBulbIcon, ChartBarIcon } from '../../constants';
 
 interface LandingPageProps {
   onGetStarted: () => void;

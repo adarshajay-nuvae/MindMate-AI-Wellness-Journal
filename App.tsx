@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { JournalEntry, Analysis, View, CognitiveDistortion } from './types';
 import { analyzeEntry } from './services/aiService';
-import { BrainIcon, FileTextIcon, LightBulbIcon, ChartBarIcon, PlusIcon, QuestionMarkCircleIcon, FlagIcon } from './constants';
+import { BrainIcon, FileTextIcon, LightBulbIcon, ChartBarIcon, PlusIcon, QuestionMarkCircleIcon, FlagIcon } from '../constants';
 import LandingPage from './src/components/LandingPage';
 import Insights from './src/components/Insights';
 
